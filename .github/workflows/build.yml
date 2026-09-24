@@ -1,19 +1,16 @@
 name: Build K118 APK
-
 on:
   push:
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -22,40 +19,21 @@ jobs:
         shell: bash
         run: |
           set -e
-
           rm -rf temp
           mkdir -p temp
-
           unzip -o K118-Android-JetpackCompose-Project.zip -d temp
-
-          echo "Extracted files:"
-          find temp -maxdepth 3 -type f | head -100
-
-          echo "Copying project..."
           cp -a temp/k118-android/. ./
-
-          echo "Project root:"
           ls -la
 
-      - name: Check Gradle
-        run: |
-          chmod +x gradlew
-          ./gradlew --version
-
       - name: Build K118 APK
+        shell: bash
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleDebug --no-daemon --stacktrace --info
-
-      - name: Find APK
-        run: |
-          echo "Searching for APK..."
-          find . -type f -name "*.apk" -print
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
       - name: Upload K118 APK
         uses: actions/upload-artifact@v4
         with:
           name: K118-APK
-          path: |
-            app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
