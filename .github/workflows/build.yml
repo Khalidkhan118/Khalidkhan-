@@ -1,13 +1,10 @@
 name: Build K118 APK
-
 on:
   push:
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,25 +17,18 @@ jobs:
 
       - name: Extract K118 Project
         run: |
-          set -e
-
           rm -rf temp
           unzip -o K118-Android-JetpackCompose-Project.zip -d temp
-
-          echo "Project contents:"
-          find temp/k118-android -maxdepth 2 -type f | sort
-
           cp -a temp/k118-android/. ./
-
-          echo "Root project:"
           ls -la
 
-      - name: Setup Gradle
+      - name: Setup Gradle 8.7.3
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7.3'
 
       - name: Build K118 APK
-        run: |
-          gradle assembleDebug --no-daemon --stacktrace
+        run: gradle assembleDebug --no-daemon --stacktrace
 
       - name: Upload K118 APK
         uses: actions/upload-artifact@v4
