@@ -1,93 +1,33 @@
 name: Build K118 APK
-
 on:
   push:
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
-
-      - name: Setup Gradle 8.7
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.7'
-
       - name: Extract K118 Project
         shell: bash
         run: |
-          set -e
-
-          rm -rf temp app build gradle
-
+          rm -rf temp
           mkdir -p temp
-
           unzip -o K118-Android-JetpackCompose-Project.zip -d temp
-
-          echo "=== Copying K118 project ==="
-          cp -a temp/k118-android/. ./
-
-          echo "=== Project files ==="
+          WRAPPER=$(find temp -type f -name "gradlew" | head -1)
+          PROJECT_DIR=$(dirname "$WRAPPER")
+          cp -a "$PROJECT_DIR"/. ./
           ls -la
-
-      - name: Create Version Catalog
-        shell: bash
-        run: |
-          set -e
-
-          mkdir -p gradle
-
-          cat > gradle/libs.versions.toml <<'EOF'
-          [versions]
-          agp = "8.2.2"
-          kotlin = "1.9.22"
-          google-services = "4.4.1"
-
-          [plugins]
-          android-application = { id = "com.android.application", version.ref = "agp" }
-          android-library = { id = "com.android.library", version.ref = "agp" }
-          kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-          kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-          google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
-
-          [libraries]
-          androidx-core-ktx = { module = "androidx.core:core-ktx", version = "1.12.0" }
-          androidx-activity-compose = { module = "androidx.activity:activity-compose", version = "1.8.2" }
-          androidx-compose-bom = { module = "androidx.compose:compose-bom", version = "2024.02.00" }
-          EOF
-
-          echo "=== Version catalog ==="
-          cat gradle/libs.versions.toml
-
-      - name: Check Gradle
-        run: |
-          gradle --version
-
       - name: Build K118 APK
         shell: bash
         run: |
-          set -e
-
-          gradle :app:assembleDebug \
-            --no-daemon \
-            --stacktrace
-
-      - name: Find APK
-        shell: bash
-        run: |
-          echo "=== APK files ==="
-          find . -type f -name "*.apk" -print
-
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
       - name: Upload K118 APK
         uses: actions/upload-artifact@v4
         with:
