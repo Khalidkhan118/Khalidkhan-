@@ -1,16 +1,19 @@
 name: Build K118 APK
+
 on:
   push:
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -19,17 +22,71 @@ jobs:
         shell: bash
         run: |
           set -e
+
           rm -rf temp
           mkdir -p temp
+
           unzip -o K118-Android-JetpackCompose-Project.zip -d temp
-          cp -a temp/k118-android/. ./
+
+          echo "=== Finding gradlew ==="
+          find temp -type f -name "gradlew" -print
+
+          WRAPPER=$(find temp -type f -name "gradlew" | head -1)
+
+          if [ -z "$WRAPPER" ]; then
+            echo "ERROR: gradlew was not found inside ZIP"
+            exit 1
+          fi
+
+          PROJECT_DIR=$(dirname "$WRAPPER")
+
+          echo "Found gradlew:"
+          echo "$WRAPPER"
+
+          echo "Project directory:"
+          echo "$PROJECT_DIR"
+
+          echo "=== Copying project ==="
+          cp -a "$PROJECT_DIR"/. ./
+
+          echo "=== Root files ==="
           ls -la
+
+          echo "=== Gradle wrapper ==="
+          ls -la gradlew gradlew.bat 2>/dev/null || true
+
+          echo "=== Gradle directory ==="
+          ls -la gradle 2>/dev/null || true
+
+      - name: Prepare Gradle Wrapper
+        shell: bash
+        run: |
+          set -e
+
+          if [ ! -f gradlew ]; then
+            echo "ERROR: gradlew is still missing"
+            exit 1
+          fi
+
+          chmod +x gradlew
+
+          echo "=== Gradle version ==="
+          ./gradlew --version
 
       - name: Build K118 APK
         shell: bash
         run: |
-          chmod +x gradlew
-          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+          set -e
+
+          ./gradlew :app:assembleDebug \
+            --no-daemon \
+            --stacktrace
+
+      - name: Find APK
+        shell: bash
+        run: |
+          echo "=== APK files ==="
+          find . -type f -name "*.apk" -print
 
       - name: Upload K118 APK
         uses: actions/upload-artifact@v4
