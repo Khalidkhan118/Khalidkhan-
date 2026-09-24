@@ -6,16 +6,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup Project Properly
+      - name: Setup Project
         run: |
+          rm -rf app gradle
           unzip -o K118-Android-JetpackCompose-Project.zip -d temp
-          PROJECT=$(find temp -name "libs.versions.toml" | head -n 1 | xargs dirname | xargs dirname)
-          echo "Project at $PROJECT"
-          cp -r $PROJECT/* ./ || true
-          cp -r $PROJECT/gradle ./ || true
-          cp $PROJECT/gradlew ./ || true
+          cp -r temp/k118-android/. ./
           chmod +x gradlew
-          ls -la gradle/
+          ls -la
 
       - uses: actions/setup-java@v4
         with:
