@@ -18,75 +18,44 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle 8.7
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.7'
-
       - name: Extract K118 Project
         shell: bash
         run: |
           set -e
 
-          rm -rf temp app build gradle
+          rm -rf temp
           mkdir -p temp
 
           unzip -o K118-Android-JetpackCompose-Project.zip -d temp
 
+          echo "Extracted files:"
+          find temp -maxdepth 3 -type f | head -100
+
+          echo "Copying project..."
           cp -a temp/k118-android/. ./
 
-          echo "K118 project copied:"
+          echo "Project root:"
           ls -la
 
-      - name: Create Version Catalog
-        shell: bash
+      - name: Check Gradle
         run: |
-          set -e
-
-          mkdir -p gradle
-
-          cat > gradle/libs.versions.toml <<'EOF'
-          [versions]
-          agp = "8.5.2"
-          kotlin = "2.0.21"
-          google-services = "4.4.2"
-
-          [plugins]
-          android-application = { id = "com.android.application", version.ref = "agp" }
-          android-library = { id = "com.android.library", version.ref = "agp" }
-          kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-          kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-          google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
-
-          [libraries]
-          androidx-core-ktx = { module = "androidx.core:core-ktx", version = "1.13.1" }
-          androidx-activity-compose = { module = "androidx.activity:activity-compose", version = "1.9.2" }
-          androidx-compose-bom = { module = "androidx.compose:compose-bom", version = "2024.09.00" }
-          EOF
-
-      - name: Fix Root Gradle File
-        shell: bash
-        run: |
-          cat > build.gradle.kts <<'EOF'
-          plugins {
-              id("com.android.application") version "8.5.2" apply false
-              id("com.android.library") version "8.5.2" apply false
-              id("org.jetbrains.kotlin.android") version "2.0.21" apply false
-              id("org.jetbrains.kotlin.plugin.compose") version "2.0.21" apply false
-              id("com.google.gms.google-services") version "4.4.2" apply false
-          }
-          EOF
-
-          echo "Root build.gradle.kts:"
-          cat build.gradle.kts
+          chmod +x gradlew
+          ./gradlew --version
 
       - name: Build K118 APK
         run: |
-          gradle assembleDebug --no-daemon --stacktrace
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace --info
+
+      - name: Find APK
+        run: |
+          echo "Searching for APK..."
+          find . -type f -name "*.apk" -print
 
       - name: Upload K118 APK
         uses: actions/upload-artifact@v4
         with:
           name: K118-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: |
+            app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
