@@ -5,23 +5,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Extract project
+      
+      - name: Setup Project Properly
         run: |
           unzip -o K118-Android-JetpackCompose-Project.zip -d temp
-          PROJECT=$(find temp -name "settings.gradle.kts" | head -n 1 | xargs dirname)
-          echo "Found at $PROJECT"
-          cp -r $PROJECT/app ./
-          cp $PROJECT/*.kts ./ || true
-          cp $PROJECT/*.properties ./ || true
+          PROJECT=$(find temp -name "libs.versions.toml" | head -n 1 | xargs dirname | xargs dirname)
+          echo "Project at $PROJECT"
+          cp -r $PROJECT/* ./ || true
           cp -r $PROJECT/gradle ./ || true
-          ls -la
+          cp $PROJECT/gradlew ./ || true
+          chmod +x gradlew
+          ls -la gradle/
+
       - uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-      - uses: gradle/actions/setup-gradle@v4
+
       - name: Build APK
-        run: gradle assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon
+
       - uses: actions/upload-artifact@v4
         with:
           name: K118-APK
