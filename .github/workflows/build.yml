@@ -13,6 +13,8 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
       - name: Setup Gradle 8.5
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -22,19 +24,17 @@ jobs:
         run: |
           set -e
           ZIP=$(find . -maxdepth 2 -type f -name "*.zip" | head -1)
-          echo "ZIP: $ZIP"
           rm -rf temp
           mkdir -p temp
           unzip -o "$ZIP" -d temp
           PROJECT_DIR=$(find temp -type f -name "settings.gradle.kts" | head -1 | xargs dirname)
           echo "PROJECT_DIR: $PROJECT_DIR"
           cp -a "$PROJECT_DIR"/. ./
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
           ls -la
       - name: Build K118 APK
         shell: bash
         run: |
-          set -e
-          gradle --version
           gradle :app:assembleDebug --no-daemon --stacktrace
       - name: Upload K118 APK
         uses: actions/upload-artifact@v4
