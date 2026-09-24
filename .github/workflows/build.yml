@@ -13,6 +13,10 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+      - name: Setup Gradle 8.5
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.5'
       - name: Extract K118 Project
         shell: bash
         run: |
@@ -24,14 +28,14 @@ jobs:
           unzip -o "$ZIP" -d temp
           PROJECT_DIR=$(find temp -type f -name "settings.gradle.kts" | head -1 | xargs dirname)
           echo "PROJECT_DIR: $PROJECT_DIR"
-          ls -la "$PROJECT_DIR"
           cp -a "$PROJECT_DIR"/. ./
           ls -la
       - name: Build K118 APK
         shell: bash
         run: |
-          chmod +x gradlew
-          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+          set -e
+          gradle --version
+          gradle :app:assembleDebug --no-daemon --stacktrace
       - name: Upload K118 APK
         uses: actions/upload-artifact@v4
         with:
