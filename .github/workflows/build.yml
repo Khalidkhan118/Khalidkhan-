@@ -17,16 +17,14 @@ jobs:
         shell: bash
         run: |
           set -e
-          ls -la
-          echo "=== Finding ZIP ==="
           ZIP=$(find . -maxdepth 2 -type f -name "*.zip" | head -1)
-          echo "ZIP Found: $ZIP"
+          echo "ZIP: $ZIP"
           rm -rf temp
           mkdir -p temp
           unzip -o "$ZIP" -d temp
-          WRAPPER=$(find temp -type f -name "gradlew" | head -1)
-          echo "WRAPPER Found: $WRAPPER"
-          PROJECT_DIR=$(dirname "$WRAPPER")
+          PROJECT_DIR=$(find temp -type f -name "settings.gradle.kts" | head -1 | xargs dirname)
+          echo "PROJECT_DIR: $PROJECT_DIR"
+          ls -la "$PROJECT_DIR"
           cp -a "$PROJECT_DIR"/. ./
           ls -la
       - name: Build K118 APK
