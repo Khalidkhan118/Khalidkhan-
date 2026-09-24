@@ -16,10 +16,16 @@ jobs:
       - name: Extract K118 Project
         shell: bash
         run: |
+          set -e
+          ls -la
+          echo "=== Finding ZIP ==="
+          ZIP=$(find . -maxdepth 2 -type f -name "*.zip" | head -1)
+          echo "ZIP Found: $ZIP"
           rm -rf temp
           mkdir -p temp
-          unzip -o K118-Android-JetpackCompose-Project.zip -d temp
+          unzip -o "$ZIP" -d temp
           WRAPPER=$(find temp -type f -name "gradlew" | head -1)
+          echo "WRAPPER Found: $WRAPPER"
           PROJECT_DIR=$(dirname "$WRAPPER")
           cp -a "$PROJECT_DIR"/. ./
           ls -la
