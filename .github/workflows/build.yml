@@ -8,13 +8,15 @@ jobs:
       
       - name: Setup Project
         run: |
+          rm -rf app build
           unzip -o K118-Android-JetpackCompose-Project.zip -d temp
-          ls -la temp/k118-android/
-          cp -r temp/k118-android/. ./
-          cp -r temp/k118-android/gradle ./ 2>/dev/null || true
-          ls -la
+          echo "Finding project..."
+          find temp -type f | head -n 20
+          ROOT=$(find temp -name "gradlew" | head -n 1 | xargs dirname)
+          echo "Project ROOT is $ROOT"
+          cp -r $ROOT/. ./
           chmod +x ./gradlew
-          ls -la gradle/
+          ls -la
 
       - uses: actions/setup-java@v4
         with:
