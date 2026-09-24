@@ -18,67 +18,67 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
       - name: Extract K118 Project
         shell: bash
         run: |
           set -e
 
-          rm -rf temp
+          rm -rf temp app build gradle
+
           mkdir -p temp
 
           unzip -o K118-Android-JetpackCompose-Project.zip -d temp
 
-          echo "=== Finding gradlew ==="
-          find temp -type f -name "gradlew" -print
+          echo "=== Copying K118 project ==="
+          cp -a temp/k118-android/. ./
 
-          WRAPPER=$(find temp -type f -name "gradlew" | head -1)
-
-          if [ -z "$WRAPPER" ]; then
-            echo "ERROR: gradlew was not found inside ZIP"
-            exit 1
-          fi
-
-          PROJECT_DIR=$(dirname "$WRAPPER")
-
-          echo "Found gradlew:"
-          echo "$WRAPPER"
-
-          echo "Project directory:"
-          echo "$PROJECT_DIR"
-
-          echo "=== Copying project ==="
-          cp -a "$PROJECT_DIR"/. ./
-
-          echo "=== Root files ==="
+          echo "=== Project files ==="
           ls -la
 
-          echo "=== Gradle wrapper ==="
-          ls -la gradlew gradlew.bat 2>/dev/null || true
-
-          echo "=== Gradle directory ==="
-          ls -la gradle 2>/dev/null || true
-
-      - name: Prepare Gradle Wrapper
+      - name: Create Version Catalog
         shell: bash
         run: |
           set -e
 
-          if [ ! -f gradlew ]; then
-            echo "ERROR: gradlew is still missing"
-            exit 1
-          fi
+          mkdir -p gradle
 
-          chmod +x gradlew
+          cat > gradle/libs.versions.toml <<'EOF'
+          [versions]
+          agp = "8.2.2"
+          kotlin = "1.9.22"
+          google-services = "4.4.1"
 
-          echo "=== Gradle version ==="
-          ./gradlew --version
+          [plugins]
+          android-application = { id = "com.android.application", version.ref = "agp" }
+          android-library = { id = "com.android.library", version.ref = "agp" }
+          kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+          kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+          google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
+
+          [libraries]
+          androidx-core-ktx = { module = "androidx.core:core-ktx", version = "1.12.0" }
+          androidx-activity-compose = { module = "androidx.activity:activity-compose", version = "1.8.2" }
+          androidx-compose-bom = { module = "androidx.compose:compose-bom", version = "2024.02.00" }
+          EOF
+
+          echo "=== Version catalog ==="
+          cat gradle/libs.versions.toml
+
+      - name: Check Gradle
+        run: |
+          gradle --version
 
       - name: Build K118 APK
         shell: bash
         run: |
           set -e
 
-          ./gradlew :app:assembleDebug \
+          gradle :app:assembleDebug \
             --no-daemon \
             --stacktrace
 
