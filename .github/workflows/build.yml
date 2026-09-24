@@ -8,11 +8,13 @@ jobs:
       
       - name: Setup Project
         run: |
-          rm -rf app gradle
           unzip -o K118-Android-JetpackCompose-Project.zip -d temp
+          ls -la temp/k118-android/
           cp -r temp/k118-android/. ./
-          chmod +x gradlew
+          cp -r temp/k118-android/gradle ./ 2>/dev/null || true
           ls -la
+          chmod +x ./gradlew
+          ls -la gradle/
 
       - uses: actions/setup-java@v4
         with:
